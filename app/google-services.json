@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "273289505219",
+    "firebase_url": "https://shalenammapride-b4fc8-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "shalenammapride-b4fc8",
+    "storage_bucket": "shalenammapride-b4fc8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:273289505219:android:41e8631dd9be721ff43576",
+        "android_client_info": {
+          "package_name": "com.pruthviraj.shalenammapride"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCQaMadCTpAKkkRM7yH72KCuneI8EWCgRA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
