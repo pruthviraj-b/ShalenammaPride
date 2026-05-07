@@ -13,7 +13,20 @@
           "package_name": "com.pruthviraj.shalenammapride"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "273289505219-e3hvkoq5nm0tjdig100bgs3jb59i63rk.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.pruthviraj.shalenammapride",
+            "certificate_hash": "d56dd96d9a8ddbda395785b1e2252ec107b84b44"
+          }
+        },
+        {
+          "client_id": "273289505219-12ia3026m08qbdpcippkbfm673s01g7m.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCQaMadCTpAKkkRM7yH72KCuneI8EWCgRA"
@@ -21,7 +34,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "273289505219-12ia3026m08qbdpcippkbfm673s01g7m.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
