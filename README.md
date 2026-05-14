@@ -4,8 +4,9 @@
 <p align="center"><strong>Modernizing School-Parent Communication with Transparency & Care</strong></p>
 
 <p align="center">
-  <a href="https://shalenammapride-b4fc8.web.app/"><strong>Live Parent Portal</strong></a> •
-  <a href="https://github.com/pruthviraj-b/ShalenammaPride/raw/main/Shale-Namma-Pride-Premium-Auth.apk"><strong>Download Admin APK</strong></a>
+  <a href="https://github.com/pruthviraj-b/ShalenammaPride"><strong>Android Admin App</strong></a> •
+  <a href="https://github.com/pruthviraj-b/ShalenammaPrideweb"><strong>Parent Web Portal</strong></a> •
+  <a href="https://shalenammapride-b4fc8.web.app/"><strong>Live Demo</strong></a>
 </p>
 
 ---
@@ -22,6 +23,7 @@
 | **Technologies Used** | **Mobile:** Kotlin, Jetpack Compose, Material 3, Firebase Auth. <br> **Web:** React.js, Vite, Vanilla CSS. <br> **Backend:** Firestore Cloud Database, Firebase Hosting. |
 | **Research Paper** | *Project Architecture & Educational Digitization (Internal Review)* |
 | **PRD Document** | [View Digital PRD Below](#-product-requirements-document-prd) |
+| **Connected Web Repo** | [ShalenammaPrideweb](https://github.com/pruthviraj-b/ShalenammaPrideweb) |
 
 ---
 
@@ -31,6 +33,15 @@
 *   **Bilingual Localization:** Seamless English and **Kannada** support, making technology accessible to all parents and staff.
 *   **Real-time Synchronization:** Changes made in the Admin Android app reflect instantly on the Parent Web Portal via Firebase listeners.
 *   **Infrastructure Auditing:** A robust module for tracking school facilities like drinking water, security, and hygiene status.
+
+---
+
+### 🔄 The Ecosystem: Real-Time Sync
+This project is half of a dual-system ecosystem. 
+1. **Admin Android App (This Repo):** Used by school staff to log daily meals, facilities, and announcements.
+2. **Parent Web Portal ([Web Repo](https://github.com/pruthviraj-b/ShalenammaPrideweb)):** A read-only dashboard where parents can view live updates instantly.
+
+The two platforms are bonded via a **Firebase Cloud Firestore** backend, ensuring that a "Meal Log" submitted on a phone in the village appears on a parent's smartphone in the city within milliseconds.
 
 ---
 
@@ -54,7 +65,7 @@ To digitize school administration and provide parents with a transparent, "windo
 **Pruthviraj B**  
 *Full Stack Developer | Building scalable solutions for educational modernization.*
 
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Profile-blue?style=flat-square&logo=linkedin)](https://www.linkedin.com/in/pruthvirajbc/)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Profile-blue?style=flat-square&logo=linkedin)](https://linkedin.com/in/pruthvirajbc)
 
 ---
 <p align="center">
