@@ -1,13 +1,21 @@
-
-
 <h1 align="center">🏫 Shale-Namma Pride</h1>
 <p align="center"><strong>Modernizing School-Parent Communication with Transparency & Care</strong></p>
 
 <p align="center">
-  <a href="https://github.com/pruthviraj-b/ShalenammaPride"><strong>Android Admin App</strong></a> •
-  <a href="https://github.com/pruthviraj-b/ShalenammaPrideweb"><strong>Parent Web Portal</strong></a> •
-  <a href="https://shalenammapride-b4fc8.web.app/"><strong>Live Demo</strong></a>
+  <a href="https://linkedin.com/in/pruthvirajbc"><img src="https://img.shields.io/badge/LinkedIn-Profile-blue?style=for-the-badge&logo=linkedin" alt="LinkedIn"></a>
+  <a href="https://github.com/pruthviraj-b/ShalenammaPride"><img src="https://img.shields.io/badge/Android-Admin_App-green?style=for-the-badge&logo=android" alt="Android App"></a>
+  <a href="https://github.com/pruthviraj-b/ShalenammaPrideweb"><img src="https://img.shields.io/badge/Web-Parent_Portal-orange?style=for-the-badge&logo=react" alt="Web Portal"></a>
 </p>
+
+---
+
+### ⚡ Quick Start: Experience the Real-Time Sync (Live Demo)
+**Examiner's Guide: How to verify the "Communication Bond" between platforms:**
+
+1.  **Open the Web Portal:** [https://shalenammapride-b4fc8.web.app/](https://shalenammapride-b4fc8.web.app/)
+2.  **Open the Admin App:** (Install the [Admin APK](https://github.com/pruthviraj-b/ShalenammaPride/raw/main/Shale-Namma-Pride-Premium-Auth.apk) or run the code).
+3.  **Make a Change:** In the Admin App, update today's **Meal Menu** or post a new **Announcement**.
+4.  **Watch the Web:** See the website update **instantly** without a page refresh! 🚀
 
 ---
 
@@ -16,23 +24,24 @@
 | Field | Details |
 | :--- | :--- |
 | **Project Title** | **Shale-Namma Pride (ಶಾಲಾ ನಮ್ಮ ಹೆಮ್ಮೆ)** |
-| **Short Description** | A high-fidelity, dual-platform ecosystem (Android + Web) designed to provide real-time transparency in school governance, meal management, and student achievements for both admins and parents. |
-| **Live URL** | [https://shalenammapride-b4fc8.web.app/](https://shalenammapride-b4fc8.web.app/) |
-| **GitHub URL** | [https://github.com/pruthviraj-b/ShalenammaPride](https://github.com/pruthviraj-b/ShalenammaPride) |
-| **Problem Statement** | Educational institutions often suffer from "Information Silos." Parents are disconnected from daily school life, unaware of meal quality or facility status. Shale-Namma Pride breaks these silos by creating a live, bilingual bridge between the school admin's daily logs and the parent's viewing portal. |
-| **Technologies Used** | **Mobile:** Kotlin, Jetpack Compose, Material 3, Firebase Auth. <br> **Web:** React.js, Vite, Vanilla CSS. <br> **Backend:** Firestore Cloud Database, Firebase Hosting. |
-| **Research Paper** | *Project Architecture & Educational Digitization (Internal Review)* |
+| **Ecosystem** | Dual-Platform (Android Admin + React Web Parent Portal) |
+| **Problem Solved** | Eliminates "Information Silos" between schools and parents using real-time Firestore sync. |
+| **Technologies** | Kotlin, Jetpack Compose, React.js, Firebase (Auth/Firestore/Hosting) |
 | **PRD Document** | [View Digital PRD Below](#-product-requirements-document-prd) |
-| **Connected Web Repo** | [ShalenammaPrideweb](https://github.com/pruthviraj-b/ShalenammaPrideweb) |
 
 ---
 
-### 🚀 Key Technical Highlights
+### 🚀 Tech Stack & Skills
 
-*   **Premium SaaS UI:** Built with **Glassmorphism** design principles and a custom HSL color system for a state-of-the-art visual experience.
-*   **Bilingual Localization:** Seamless English and **Kannada** support, making technology accessible to all parents and staff.
-*   **Real-time Synchronization:** Changes made in the Admin Android app reflect instantly on the Parent Web Portal via Firebase listeners.
-*   **Infrastructure Auditing:** A robust module for tracking school facilities like drinking water, security, and hygiene status.
+**Mobile Development**  
+![Kotlin](https://img.shields.io/badge/kotlin-%237F52FF.svg?style=for-the-badge&logo=kotlin&logoColor=white) 
+![Android](https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white) 
+![Jetpack Compose](https://img.shields.io/badge/Jetpack_Compose-4285F4?style=for-the-badge&logo=jetpackcompose&logoColor=white)
+
+**Web & Backend**  
+![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB) 
+![Vite](https://img.shields.io/badge/vite-%23646CFF.svg?style=for-the-badge&logo=vite&logoColor=white) 
+![Firebase](https://img.shields.io/badge/firebase-%23039BE5.svg?style=for-the-badge&logo=firebase)
 
 ---
 
@@ -56,8 +65,7 @@ To digitize school administration and provide parents with a transparent, "windo
 
 #### 3. User Experience (UX)
 - **Zero-Latency:** Real-time updates without page refreshes.
-- **Inclusivity:** Bilingual UI for diverse linguistic backgrounds.
-- **Accessibility:** High contrast ratios and responsive layouts for mobile-first parents.
+- **Inclusivity:** Bilingual UI (English/Kannada) for diverse linguistic backgrounds.
 
 ---
 
