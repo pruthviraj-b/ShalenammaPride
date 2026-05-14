@@ -1,6 +1,4 @@
-<p align="center">
-  <img src="./banner.png" alt="Shale-Namma Pride Banner" width="100%">
-</p>
+
 
 <h1 align="center">🏫 Shale-Namma Pride</h1>
 <p align="center"><strong>Modernizing School-Parent Communication with Transparency & Care</strong></p>
@@ -12,7 +10,7 @@
 
 ---
 
-### 📂 Project Submission Profile
+### 📋 Professional Project Overview
 
 | Field | Details |
 | :--- | :--- |
@@ -54,7 +52,9 @@ To digitize school administration and provide parents with a transparent, "windo
 
 ### 👤 Developer
 **Pruthviraj B**  
-*Building scalable solutions for educational modernization.*
+*Full Stack Developer | Building scalable solutions for educational modernization.*
+
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Profile-blue?style=flat-square&logo=linkedin)](https://www.linkedin.com/in/pruthvirajbc/)
 
 ---
 <p align="center">
