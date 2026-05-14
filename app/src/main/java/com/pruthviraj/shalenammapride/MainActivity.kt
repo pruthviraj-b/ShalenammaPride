@@ -251,6 +251,7 @@ fun MainScreen() {
                 modifier = Modifier.padding(innerPadding)
             ) {
                 composable("login") { LoginScreen(navController) }
+                composable("register") { RegisterScreen(navController) }
                 composable(BottomNavItem.Dashboard.route) { DashboardScreen(navController, innerPadding = PaddingValues(0.dp)) }
                 composable(BottomNavItem.Meal.route)      { MealScreen(onBackClick = { navController.popBackStack() }) }
                 composable(BottomNavItem.Facility.route)  { FacilityScreen(onBackClick = { navController.popBackStack() }) }

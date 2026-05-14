@@ -27,7 +27,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -39,55 +38,21 @@ import com.pruthviraj.shalenammapride.AppNotificationManager
 import com.pruthviraj.shalenammapride.R
 
 @Composable
-fun LoginScreen(navController: NavController) {
+fun RegisterScreen(navController: NavController) {
     val context = LocalContext.current as Activity
     val auth = FirebaseAuth.getInstance()
+    var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
     var passwordVisible by remember { mutableStateOf(false) }
-    var rememberMe by remember { mutableStateOf(false) }
 
     val gradientBg = Brush.verticalGradient(
         colors = listOf(
-            Color(0xFFFFF6F0), // Warm white
+            Color(0xFFFFF6F0),
             Color(0xFFFFF0E5)
         )
     )
-
-    val orangeGradient = Brush.linearGradient(
-        colors = listOf(
-            Color(0xFFFF7A3D),
-            Color(0xFFFF9A62)
-        )
-    )
-
-    val gso = GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-        .requestIdToken(context.getString(R.string.default_web_client_id))
-        .requestEmail()
-        .build()
-    val googleSignInClient = GoogleSignIn.getClient(context, gso)
-
-    val googleSignInLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        val task = GoogleSignIn.getSignedInAccountFromIntent(result.data)
-        try {
-            val account = task.getResult(com.google.android.gms.common.api.ApiException::class.java)
-            val credential = GoogleAuthProvider.getCredential(account?.idToken, null)
-            isLoading = true
-            auth.signInWithCredential(credential).addOnCompleteListener { authTask ->
-                isLoading = false
-                if (authTask.isSuccessful) {
-                    AppNotificationManager.trigger("✅", "Google Sign-In Successful!")
-                    navController.navigate("dashboard") { popUpTo("login") { inclusive = true } }
-                } else {
-                    AppNotificationManager.trigger("❌", authTask.exception?.message ?: "Sign-in failed")
-                }
-            }
-        } catch (e: Exception) {
-            AppNotificationManager.trigger("❌", "Google Sign-in Cancelled or Failed")
-            isLoading = false
-        }
-    }
 
     Box(
         modifier = Modifier
@@ -100,16 +65,16 @@ fun LoginScreen(navController: NavController) {
             Box(
                 modifier = Modifier
                     .size(250.dp)
-                    .align(Alignment.TopEnd)
-                    .offset(x = 50.dp, y = (-50).dp)
-                    .background(Color(0xFFFF7A3D).copy(alpha = 0.05f), shape = RoundedCornerShape(125.dp))
+                    .align(Alignment.TopStart)
+                    .offset(x = (-50).dp, y = (-50).dp)
+                    .background(Color(0xFFFF9A62).copy(alpha = 0.05f), shape = RoundedCornerShape(125.dp))
             )
             Box(
                 modifier = Modifier
                     .size(300.dp)
-                    .align(Alignment.BottomStart)
-                    .offset(x = (-80).dp, y = 80.dp)
-                    .background(Color(0xFFFF9A62).copy(alpha = 0.08f), shape = RoundedCornerShape(150.dp))
+                    .align(Alignment.BottomEnd)
+                    .offset(x = 80.dp, y = 80.dp)
+                    .background(Color(0xFFFF7A3D).copy(alpha = 0.08f), shape = RoundedCornerShape(150.dp))
             )
         }
 
@@ -120,21 +85,21 @@ fun LoginScreen(navController: NavController) {
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(60.dp))
+            Spacer(modifier = Modifier.height(50.dp))
             
             // Floating Logo
             Surface(
                 shape = RoundedCornerShape(32.dp),
                 color = Color.White,
                 shadowElevation = 16.dp,
-                modifier = Modifier.size(90.dp)
+                modifier = Modifier.size(80.dp)
             ) {
                 Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                     Image(
                         painter = painterResource(id = R.mipmap.logo),
                         contentDescription = "App Logo",
                         contentScale = ContentScale.Fit,
-                        modifier = Modifier.size(60.dp)
+                        modifier = Modifier.size(50.dp)
                     )
                 }
             }
@@ -142,7 +107,7 @@ fun LoginScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "SHALE-NAMMA PRIDE",
+                text = "CREATE ACCOUNT",
                 color = Color(0xFFFF7A3D),
                 fontSize = 12.sp,
                 fontWeight = FontWeight.Bold,
@@ -150,18 +115,11 @@ fun LoginScreen(navController: NavController) {
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "Admin Portal",
+                text = "Join Admin Portal",
                 color = Color(0xFF1E293B),
-                fontSize = 32.sp,
+                fontSize = 28.sp,
                 fontWeight = FontWeight.ExtraBold,
                 letterSpacing = (-1).sp
-            )
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = "Secure school management access",
-                color = Color(0xFF64748B),
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium
             )
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -177,30 +135,29 @@ fun LoginScreen(navController: NavController) {
                     modifier = Modifier.padding(24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Google Login FIRST
-                    OutlinedButton(
-                        onClick = { googleSignInLauncher.launch(googleSignInClient.signInIntent) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp),
+                    
+                    // Name Input
+                    OutlinedTextField(
+                        value = name,
+                        onValueChange = { name = it },
+                        placeholder = { Text("Full Name", color = Color(0xFF94A3B8)) },
+                        leadingIcon = {
+                            Icon(Icons.Default.Badge, contentDescription = null, tint = Color(0xFF94A3B8))
+                        },
+                        modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
-                        border = BorderStroke(1.dp, Color(0xFFFF7A3D).copy(alpha = 0.3f)),
-                        colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.White)
-                    ) {
-                        Text("G", color = Color.Red, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text("Continue with Google", color = Color(0xFF1E293B), fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
-                    }
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFFFF7A3D),
+                            unfocusedBorderColor = Color(0xFFE2E8F0),
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
+                            focusedTextColor = Color(0xFF1E293B),
+                            unfocusedTextColor = Color(0xFF1E293B)
+                        )
+                    )
 
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                        HorizontalDivider(modifier = Modifier.weight(1f), color = Color(0xFFE2E8F0))
-                        Text(" OR CONTINUE WITH EMAIL ", color = Color(0xFF94A3B8), fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 8.dp))
-                        HorizontalDivider(modifier = Modifier.weight(1f), color = Color(0xFFE2E8F0))
-                    }
-
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     // Email Input
                     OutlinedTextField(
@@ -208,7 +165,7 @@ fun LoginScreen(navController: NavController) {
                         onValueChange = { email = it },
                         placeholder = { Text("Email Address", color = Color(0xFF94A3B8)) },
                         leadingIcon = {
-                            Icon(Icons.Default.Person, contentDescription = null, tint = Color(0xFF94A3B8))
+                            Icon(Icons.Default.Email, contentDescription = null, tint = Color(0xFF94A3B8))
                         },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(16.dp),
@@ -229,7 +186,7 @@ fun LoginScreen(navController: NavController) {
                     OutlinedTextField(
                         value = password,
                         onValueChange = { password = it },
-                        placeholder = { Text("Password", color = Color(0xFF94A3B8)) },
+                        placeholder = { Text("Create Password", color = Color(0xFF94A3B8)) },
                         leadingIcon = {
                             Icon(Icons.Default.Lock, contentDescription = null, tint = Color(0xFF94A3B8))
                         },
@@ -256,51 +213,27 @@ fun LoginScreen(navController: NavController) {
                         )
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(32.dp))
 
-                    // Remember Me & Forgot Password
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Checkbox(
-                                checked = rememberMe,
-                                onCheckedChange = { rememberMe = it },
-                                colors = CheckboxDefaults.colors(checkedColor = Color(0xFFFF7A3D))
-                            )
-                            Text("Remember me", color = Color(0xFF64748B), fontSize = 13.sp)
-                        }
-                        Text(
-                            "Forgot password?",
-                            color = Color(0xFFFF7A3D),
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.clickable { /* Handle forgot password */ }
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(20.dp))
-
-                    // Sign In Button
+                    // Register Button
                     Button(
                         onClick = {
-                            if (email.isBlank() || password.isBlank()) {
-                                AppNotificationManager.trigger("⚠️", "Enter email and password")
+                            if (email.isBlank() || password.isBlank() || name.isBlank()) {
+                                AppNotificationManager.trigger("⚠️", "Fill all details")
                                 return@Button
                             }
                             isLoading = true
-                            auth.signInWithEmailAndPassword(email.trim(), password)
+                            auth.createUserWithEmailAndPassword(email.trim(), password)
                                 .addOnCompleteListener { task ->
                                     isLoading = false
                                     if (task.isSuccessful) {
-                                        AppNotificationManager.trigger("✅", "Login Successful!")
+                                        AppNotificationManager.trigger("🎉", "Account Created!")
                                         navController.navigate("dashboard") {
                                             popUpTo("login") { inclusive = true }
+                                            popUpTo("register") { inclusive = true }
                                         }
                                     } else {
-                                        AppNotificationManager.trigger("❌", task.exception?.message ?: "Login failed")
+                                        AppNotificationManager.trigger("❌", task.exception?.message ?: "Registration failed")
                                     }
                                 }
                         },
@@ -313,19 +246,17 @@ fun LoginScreen(navController: NavController) {
                         enabled = !isLoading
                     ) {
                         Text(
-                            if (isLoading) "Please wait..." else "Sign In",
+                            if (isLoading) "Creating Account..." else "Register",
                             color = Color(0xFFFF7A3D),
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp
                         )
                     }
-
-                    // Removed duplicate bottom OR section
                 }
             }
 
             Spacer(modifier = Modifier.height(32.dp))
-
+            
             // Security Area
             Icon(
                 imageVector = Icons.Default.Fingerprint,
@@ -337,23 +268,22 @@ fun LoginScreen(navController: NavController) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Default.GppGood, contentDescription = null, tint = Color(0xFF10B981), modifier = Modifier.size(14.dp))
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("Secure login • Your data is encrypted", color = Color(0xFF64748B), fontSize = 12.sp)
+                Text("Secure registration • Your data is encrypted", color = Color(0xFF64748B), fontSize = 12.sp)
             }
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Register Link
+            // Login Link
             Row(modifier = Modifier.padding(bottom = 32.dp)) {
-                Text("Don't have an account? ", color = Color(0xFF64748B), fontSize = 14.sp)
+                Text("Already have an account? ", color = Color(0xFF64748B), fontSize = 14.sp)
                 Text(
-                    "Register",
+                    "Sign In",
                     color = Color(0xFFFF7A3D),
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
-                    modifier = Modifier.clickable { navController.navigate("register") }
+                    modifier = Modifier.clickable { navController.popBackStack() }
                 )
             }
         }
     }
 }
-
