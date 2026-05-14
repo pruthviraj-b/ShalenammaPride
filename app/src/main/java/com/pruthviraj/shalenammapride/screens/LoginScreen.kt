@@ -92,115 +92,129 @@ fun LoginScreen(navController: NavController) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(gradientBg),
-        contentAlignment = Alignment.Center
+            .background(Color.White),
+        contentAlignment = Alignment.TopCenter
     ) {
-        // Subtle abstract background shapes
-        Box(modifier = Modifier.fillMaxSize()) {
-            Box(
-                modifier = Modifier
-                    .size(250.dp)
-                    .align(Alignment.TopEnd)
-                    .offset(x = 50.dp, y = (-50).dp)
-                    .background(Color(0xFFFF7A3D).copy(alpha = 0.05f), shape = RoundedCornerShape(125.dp))
+        // Header Area with Blur-into-White effect
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(300.dp)
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.auth_header_bg),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
             )
+            // Gradient Overlay to "Blur into White"
             Box(
                 modifier = Modifier
-                    .size(300.dp)
-                    .align(Alignment.BottomStart)
-                    .offset(x = (-80).dp, y = 80.dp)
-                    .background(Color(0xFFFF9A62).copy(alpha = 0.08f), shape = RoundedCornerShape(150.dp))
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                Color.White.copy(alpha = 0.5f),
+                                Color.White
+                            ),
+                            startY = 0f,
+                            endY = Float.POSITIVE_INFINITY
+                        )
+                    )
             )
         }
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(horizontal = 24.dp)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(60.dp))
+            Spacer(modifier = Modifier.height(80.dp))
             
-            // Floating Logo
+            // App Logo - Floating
             Surface(
                 shape = RoundedCornerShape(32.dp),
                 color = Color.White,
-                shadowElevation = 16.dp,
-                modifier = Modifier.size(90.dp)
+                shadowElevation = 20.dp,
+                modifier = Modifier.size(100.dp)
             ) {
                 Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
                     Image(
-                        painter = painterResource(id = R.mipmap.logo),
+                        painter = painterResource(id = R.drawable.app_logo),
                         contentDescription = "App Logo",
                         contentScale = ContentScale.Fit,
-                        modifier = Modifier.size(60.dp)
+                        modifier = Modifier.size(70.dp)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             Text(
                 text = "SHALE-NAMMA PRIDE",
                 color = Color(0xFFFF7A3D),
-                fontSize = 12.sp,
+                fontSize = 14.sp,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 2.sp
             )
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "Admin Portal",
                 color = Color(0xFF1E293B),
-                fontSize = 32.sp,
+                fontSize = 36.sp,
                 fontWeight = FontWeight.ExtraBold,
                 letterSpacing = (-1).sp
             )
-            Spacer(modifier = Modifier.height(6.dp))
             Text(
                 text = "Secure school management access",
                 color = Color(0xFF64748B),
-                fontSize = 14.sp,
+                fontSize = 15.sp,
                 fontWeight = FontWeight.Medium
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(40.dp))
 
             // Glassmorphism Card
             Surface(
-                shape = RoundedCornerShape(32.dp),
-                color = Color.White.copy(alpha = 0.85f),
-                shadowElevation = 24.dp,
+                shape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp),
+                color = Color.White,
+                shadowElevation = 0.dp,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
-                    modifier = Modifier.padding(24.dp),
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 32.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Google Login FIRST
+                    // Google Login
                     OutlinedButton(
                         onClick = { googleSignInLauncher.launch(googleSignInClient.signInIntent) },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(56.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        border = BorderStroke(1.dp, Color(0xFFFF7A3D).copy(alpha = 0.3f)),
+                            .height(58.dp),
+                        shape = RoundedCornerShape(20.dp),
+                        border = BorderStroke(1.dp, Color(0xFFE2E8F0)),
                         colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.White)
                     ) {
-                        Text("G", color = Color.Red, fontWeight = FontWeight.ExtraBold, fontSize = 20.sp)
+                        Image(
+                            painter = painterResource(id = R.drawable.ic_launcher_foreground), // Using foreground as a placeholder for G logo if needed
+                            contentDescription = null,
+                            modifier = Modifier.size(24.dp)
+                        )
                         Spacer(modifier = Modifier.width(12.dp))
-                        Text("Continue with Google", color = Color(0xFF1E293B), fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
+                        Text("Continue with Google", color = Color(0xFF1E293B), fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
                     }
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(28.dp))
 
                     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                        HorizontalDivider(modifier = Modifier.weight(1f), color = Color(0xFFE2E8F0))
-                        Text(" OR CONTINUE WITH EMAIL ", color = Color(0xFF94A3B8), fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 8.dp))
-                        HorizontalDivider(modifier = Modifier.weight(1f), color = Color(0xFFE2E8F0))
+                        HorizontalDivider(modifier = Modifier.weight(1f), color = Color(0xFFF1F5F9))
+                        Text(" OR EMAIL ", color = Color(0xFF94A3B8), fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 12.dp))
+                        HorizontalDivider(modifier = Modifier.weight(1f), color = Color(0xFFF1F5F9))
                     }
 
-                    Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(28.dp))
 
                     // Email Input
                     OutlinedTextField(
@@ -208,16 +222,16 @@ fun LoginScreen(navController: NavController) {
                         onValueChange = { email = it },
                         placeholder = { Text("Email Address", color = Color(0xFF94A3B8)) },
                         leadingIcon = {
-                            Icon(Icons.Default.Person, contentDescription = null, tint = Color(0xFF94A3B8))
+                            Icon(Icons.Default.Email, contentDescription = null, tint = Color(0xFF94A3B8))
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
+                        shape = RoundedCornerShape(18.dp),
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Color(0xFFFF7A3D),
-                            unfocusedBorderColor = Color(0xFFE2E8F0),
-                            focusedContainerColor = Color.White,
-                            unfocusedContainerColor = Color.White,
+                            unfocusedBorderColor = Color(0xFFF1F5F9),
+                            focusedContainerColor = Color(0xFFF8FAFC),
+                            unfocusedContainerColor = Color(0xFFF8FAFC),
                             focusedTextColor = Color(0xFF1E293B),
                             unfocusedTextColor = Color(0xFF1E293B)
                         )
@@ -244,19 +258,19 @@ fun LoginScreen(navController: NavController) {
                         },
                         visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
+                        shape = RoundedCornerShape(18.dp),
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Color(0xFFFF7A3D),
-                            unfocusedBorderColor = Color(0xFFE2E8F0),
-                            focusedContainerColor = Color.White,
-                            unfocusedContainerColor = Color.White,
+                            unfocusedBorderColor = Color(0xFFF1F5F9),
+                            focusedContainerColor = Color(0xFFF8FAFC),
+                            unfocusedContainerColor = Color(0xFFF8FAFC),
                             focusedTextColor = Color(0xFF1E293B),
                             unfocusedTextColor = Color(0xFF1E293B)
                         )
                     )
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     // Remember Me & Forgot Password
                     Row(
@@ -270,18 +284,18 @@ fun LoginScreen(navController: NavController) {
                                 onCheckedChange = { rememberMe = it },
                                 colors = CheckboxDefaults.colors(checkedColor = Color(0xFFFF7A3D))
                             )
-                            Text("Remember me", color = Color(0xFF64748B), fontSize = 13.sp)
+                            Text("Remember me", color = Color(0xFF64748B), fontSize = 14.sp)
                         }
                         Text(
-                            "Forgot password?",
+                            "Forgot?",
                             color = Color(0xFFFF7A3D),
-                            fontSize = 13.sp,
-                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Bold,
                             modifier = Modifier.clickable { /* Handle forgot password */ }
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(32.dp))
 
                     // Sign In Button
                     Button(
@@ -295,7 +309,7 @@ fun LoginScreen(navController: NavController) {
                                 .addOnCompleteListener { task ->
                                     isLoading = false
                                     if (task.isSuccessful) {
-                                        AppNotificationManager.trigger("✅", "Login Successful!")
+                                        AppNotificationManager.trigger("✅", "Welcome Back!")
                                         navController.navigate("dashboard") {
                                             popUpTo("login") { inclusive = true }
                                         }
@@ -306,53 +320,37 @@ fun LoginScreen(navController: NavController) {
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(56.dp)
-                            .shadow(8.dp, RoundedCornerShape(16.dp), spotColor = Color(0xFFFF7A3D)),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color.White),
-                        shape = RoundedCornerShape(16.dp),
+                            .height(60.dp)
+                            .shadow(12.dp, RoundedCornerShape(20.dp), spotColor = Color(0xFFFF7A3D)),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF7A3D)),
+                        shape = RoundedCornerShape(20.dp),
                         enabled = !isLoading
                     ) {
                         Text(
-                            if (isLoading) "Please wait..." else "Sign In",
-                            color = Color(0xFFFF7A3D),
-                            fontWeight = FontWeight.Bold,
+                            if (isLoading) "Signing in..." else "Sign In",
+                            color = Color.White,
+                            fontWeight = FontWeight.ExtraBold,
                             fontSize = 18.sp
                         )
                     }
+                    
+                    Spacer(modifier = Modifier.height(32.dp))
 
-                    // Removed duplicate bottom OR section
+                    // Register Link
+                    Row {
+                        Text("New here? ", color = Color(0xFF64748B), fontSize = 15.sp)
+                        Text(
+                            "Create Account",
+                            color = Color(0xFFFF7A3D),
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.clickable { navController.navigate("register") }
+                        )
+                    }
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Security Area
-            Icon(
-                imageVector = Icons.Default.Fingerprint,
-                contentDescription = "Security",
-                tint = Color(0xFF94A3B8),
-                modifier = Modifier.size(28.dp)
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.GppGood, contentDescription = null, tint = Color(0xFF10B981), modifier = Modifier.size(14.dp))
-                Spacer(modifier = Modifier.width(4.dp))
-                Text("Secure login • Your data is encrypted", color = Color(0xFF64748B), fontSize = 12.sp)
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Register Link
-            Row(modifier = Modifier.padding(bottom = 32.dp)) {
-                Text("Don't have an account? ", color = Color(0xFF64748B), fontSize = 14.sp)
-                Text(
-                    "Register",
-                    color = Color(0xFFFF7A3D),
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.clickable { navController.navigate("register") }
-                )
-            }
+            Spacer(modifier = Modifier.height(40.dp))
         }
     }
 }
