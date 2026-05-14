@@ -17,6 +17,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.draw.clip
 import androidx.navigation.NavController
 import com.google.firebase.FirebaseException
 import com.google.firebase.auth.FirebaseAuth
@@ -31,15 +33,18 @@ import com.google.android.gms.auth.api.signin.GoogleSignIn
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions
 import com.google.firebase.auth.GoogleAuthProvider
 
-private val BgDark    = Color(0xFFF9FAFB)
-private val BgMid     = Color(0xFFFFFFFF)
-private val PrimaryDark = Color(0xFF111827)
-private val TextPrim  = Color(0xFF111827)
-private val TextMuted = Color(0xFF6B7280)
-private val Border    = Color(0xFFE5E7EB)
+// Premium White Theme Colors - Refactored to MaterialTheme 3
 
 @Composable
 fun LoginScreen(navController: NavController) {
+    // Taj Mahal Theme Tokens
+    val BgDark = MaterialTheme.colorScheme.background
+    val BgMid = MaterialTheme.colorScheme.surface
+    val PrimaryDark = MaterialTheme.colorScheme.primary
+    val TextPrim = MaterialTheme.colorScheme.onBackground
+    val TextMuted = MaterialTheme.colorScheme.onSurfaceVariant
+    val Border = MaterialTheme.colorScheme.outline
+
     var isPhoneLogin by remember { mutableStateOf(false) }
     var statusMessage by remember { mutableStateOf("") }
     
@@ -79,38 +84,51 @@ fun LoginScreen(navController: NavController) {
         }
     }
 
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(BgDark)
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .background(
+                brush = androidx.compose.ui.graphics.Brush.linearGradient(
+                    colors = listOf(
+                        MaterialTheme.colorScheme.primary,
+                        MaterialTheme.colorScheme.primaryContainer
+                    )
+                )
+            ),
+        contentAlignment = Alignment.Center
     ) {
         Surface(
-            shape = RoundedCornerShape(16.dp),
-            color = BgMid,
-            border = androidx.compose.foundation.BorderStroke(1.dp, Border),
-            modifier = Modifier.fillMaxWidth()
+            shape = RoundedCornerShape(32.dp),
+            color = Color.White.copy(alpha = 0.15f),
+            border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.2f)),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(24.dp)
+                .shadow(20.dp, RoundedCornerShape(32.dp))
         ) {
-            Column(modifier = Modifier.padding(24.dp)) {
+            Column(
+                modifier = Modifier
+                    .background(Color.White.copy(alpha = 0.1f))
+                    .padding(32.dp)
+            ) {
                 Text(
                     "SHALE-NAMMA PRIDE", 
-                    color = TextMuted, 
-                    fontSize = 12.sp, 
-                    fontWeight = FontWeight.Medium, 
-                    letterSpacing = 1.sp,
+                    color = Color.White.copy(alpha = 0.7f), 
+                    fontSize = 14.sp, 
+                    fontWeight = FontWeight.Bold, 
+                    letterSpacing = 2.sp,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
                 )
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    "Admin Access", 
-                    color = TextPrim, 
-                    fontSize = 26.sp, 
+                    "Admin Portal", 
+                    color = Color.White, 
+                    fontSize = 32.sp, 
                     fontWeight = FontWeight.ExtraBold,
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    letterSpacing = (-1).sp
                 )
                 
                 Spacer(modifier = Modifier.height(24.dp))
@@ -166,24 +184,33 @@ fun LoginScreen(navController: NavController) {
 
 @Composable
 fun TabButton(text: String, selected: Boolean, onClick: () -> Unit) {
+    val PrimaryDark = MaterialTheme.colorScheme.primary
+    val TextMuted = MaterialTheme.colorScheme.onSurfaceVariant
+    val Border = MaterialTheme.colorScheme.outline
+
     Surface(
-        shape = RoundedCornerShape(20.dp),
-        color = if (selected) PrimaryDark else Color.Transparent,
-        border = androidx.compose.foundation.BorderStroke(1.dp, if (selected) PrimaryDark else Border),
+        shape = RoundedCornerShape(24.dp),
+        color = if (selected) Color.White else Color.White.copy(alpha = 0.1f),
+        border = androidx.compose.foundation.BorderStroke(1.dp, if (selected) Color.White else Color.White.copy(alpha = 0.2f)),
         modifier = Modifier.padding(2.dp),
         onClick = onClick
     ) {
         Text(
             text, 
-            color = if (selected) Color.White else TextMuted,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            color = if (selected) MaterialTheme.colorScheme.primary else Color.White.copy(alpha = 0.7f),
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp)
         )
     }
 }
 
 @Composable
 fun EmailLoginSection(auth: FirebaseAuth, navController: NavController, onStatusUpdate: (String) -> Unit) {
+    val PrimaryDark = MaterialTheme.colorScheme.primary
+    val TextPrim = MaterialTheme.colorScheme.onBackground
+    val TextMuted = MaterialTheme.colorScheme.onSurfaceVariant
+    val Border = MaterialTheme.colorScheme.outline
+
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
@@ -192,27 +219,33 @@ fun EmailLoginSection(auth: FirebaseAuth, navController: NavController, onStatus
     OutlinedTextField(
         value = email,
         onValueChange = { email = it },
-        label = { Text("Email", color = TextMuted) },
+        label = { Text("Email", color = Color.White.copy(alpha = 0.7f)) },
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(10.dp),
+        shape = RoundedCornerShape(16.dp),
         singleLine = true,
         colors = OutlinedTextFieldDefaults.colors(
-            focusedTextColor = TextPrim, unfocusedTextColor = TextPrim,
-            focusedBorderColor = PrimaryDark, unfocusedBorderColor = Border
+            focusedTextColor = Color.White,
+            unfocusedTextColor = Color.White,
+            focusedBorderColor = Color.White,
+            unfocusedBorderColor = Color.White.copy(alpha = 0.3f),
+            cursorColor = Color.White
         )
     )
-    Spacer(modifier = Modifier.height(12.dp))
+    Spacer(modifier = Modifier.height(16.dp))
     OutlinedTextField(
         value = password,
         onValueChange = { password = it },
-        label = { Text("Password", color = TextMuted) },
+        label = { Text("Password", color = Color.White.copy(alpha = 0.7f)) },
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(10.dp),
+        shape = RoundedCornerShape(16.dp),
         singleLine = true,
         visualTransformation = PasswordVisualTransformation(),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedTextColor = TextPrim, unfocusedTextColor = TextPrim,
-            focusedBorderColor = PrimaryDark, unfocusedBorderColor = Border
+            focusedTextColor = Color.White,
+            unfocusedTextColor = Color.White,
+            focusedBorderColor = Color.White,
+            unfocusedBorderColor = Color.White.copy(alpha = 0.3f),
+            cursorColor = Color.White
         )
     )
     Spacer(modifier = Modifier.height(16.dp))
@@ -259,12 +292,16 @@ fun EmailLoginSection(auth: FirebaseAuth, navController: NavController, onStatus
                     }
             }
         },
-        modifier = Modifier.fillMaxWidth().height(50.dp),
+        modifier = Modifier.fillMaxWidth().height(60.dp),
         enabled = !isLoading,
-        shape = RoundedCornerShape(10.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = PrimaryDark)
+        shape = RoundedCornerShape(16.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = Color.White,
+            contentColor = MaterialTheme.colorScheme.primary
+        ),
+        elevation = ButtonDefaults.buttonElevation(8.dp)
     ) {
-        Text(if (isLoading) "Please wait..." else if (isRegistering) "Register" else "Sign In", color = Color.White, fontWeight = FontWeight.SemiBold)
+        Text(if (isLoading) "Please wait..." else if (isRegistering) "Register" else "Sign In", fontWeight = FontWeight.Bold, fontSize = 18.sp)
     }
 
     Spacer(modifier = Modifier.height(8.dp))
@@ -274,14 +311,19 @@ fun EmailLoginSection(auth: FirebaseAuth, navController: NavController, onStatus
     ) {
         Text(
             if (isRegistering) "Already have an account? Sign In" else "Don't have an account? Register",
-            color = PrimaryDark,
-            fontWeight = FontWeight.Medium
+            color = Color.White,
+            fontWeight = FontWeight.SemiBold
         )
     }
 }
 
 @Composable
 fun PhoneLoginSection(auth: FirebaseAuth, navController: NavController, onStatusUpdate: (String) -> Unit) {
+    val PrimaryDark = MaterialTheme.colorScheme.primary
+    val TextPrim = MaterialTheme.colorScheme.onBackground
+    val TextMuted = MaterialTheme.colorScheme.onSurfaceVariant
+    val Border = MaterialTheme.colorScheme.outline
+
     val context = LocalContext.current as Activity
     var phoneNumber by remember { mutableStateOf("") }
     var otpCode by remember { mutableStateOf("") }
@@ -293,13 +335,16 @@ fun PhoneLoginSection(auth: FirebaseAuth, navController: NavController, onStatus
         OutlinedTextField(
             value = phoneNumber,
             onValueChange = { phoneNumber = it },
-            label = { Text("Phone Number (with country code, e.g. +91)", color = TextMuted) },
+            label = { Text("Phone Number", color = Color.White.copy(alpha = 0.7f)) },
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(10.dp),
+            shape = RoundedCornerShape(16.dp),
             singleLine = true,
             colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = TextPrim, unfocusedTextColor = TextPrim,
-                focusedBorderColor = PrimaryDark, unfocusedBorderColor = Border
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.White,
+                focusedBorderColor = Color.White,
+                unfocusedBorderColor = Color.White.copy(alpha = 0.3f),
+                cursorColor = Color.White
             )
         )
         Spacer(modifier = Modifier.height(24.dp))
@@ -345,24 +390,31 @@ fun PhoneLoginSection(auth: FirebaseAuth, navController: NavController, onStatus
                     .build()
                 PhoneAuthProvider.verifyPhoneNumber(options)
             },
-            modifier = Modifier.fillMaxWidth().height(50.dp),
+            modifier = Modifier.fillMaxWidth().height(60.dp),
             enabled = !isLoading,
-            shape = RoundedCornerShape(10.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = PrimaryDark)
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.White,
+                contentColor = MaterialTheme.colorScheme.primary
+            ),
+            elevation = ButtonDefaults.buttonElevation(8.dp)
         ) {
-            Text(if (isLoading) "Sending..." else "Send OTP", color = Color.White, fontWeight = FontWeight.SemiBold)
+            Text(if (isLoading) "Sending..." else "Send OTP", fontWeight = FontWeight.Bold, fontSize = 18.sp)
         }
     } else {
         OutlinedTextField(
             value = otpCode,
             onValueChange = { otpCode = it },
-            label = { Text("Enter 6-digit OTP", color = TextMuted) },
+            label = { Text("Enter 6-digit OTP", color = Color.White.copy(alpha = 0.7f)) },
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(10.dp),
+            shape = RoundedCornerShape(16.dp),
             singleLine = true,
             colors = OutlinedTextFieldDefaults.colors(
-                focusedTextColor = TextPrim, unfocusedTextColor = TextPrim,
-                focusedBorderColor = PrimaryDark, unfocusedBorderColor = Border
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.White,
+                focusedBorderColor = Color.White,
+                unfocusedBorderColor = Color.White.copy(alpha = 0.3f),
+                cursorColor = Color.White
             )
         )
         Spacer(modifier = Modifier.height(24.dp))
@@ -377,12 +429,16 @@ fun PhoneLoginSection(auth: FirebaseAuth, navController: NavController, onStatus
                 val credential = PhoneAuthProvider.getCredential(verificationIdState, otpCode)
                 signInWithPhoneAuthCredential(auth, credential, navController, onStatusUpdate)
             },
-            modifier = Modifier.fillMaxWidth().height(50.dp),
+            modifier = Modifier.fillMaxWidth().height(60.dp),
             enabled = !isLoading,
-            shape = RoundedCornerShape(10.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = PrimaryDark)
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.White,
+                contentColor = MaterialTheme.colorScheme.primary
+            ),
+            elevation = ButtonDefaults.buttonElevation(8.dp)
         ) {
-            Text(if (isLoading) "Verifying..." else "Verify OTP", color = Color.White, fontWeight = FontWeight.SemiBold)
+            Text(if (isLoading) "Verifying..." else "Verify OTP", fontWeight = FontWeight.Bold, fontSize = 18.sp)
         }
     }
 }

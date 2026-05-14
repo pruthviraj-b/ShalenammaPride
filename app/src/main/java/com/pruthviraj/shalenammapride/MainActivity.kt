@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -24,6 +25,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.pruthviraj.shalenammapride.screens.*
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
@@ -39,6 +41,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.Alignment
 import androidx.compose.animation.*
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.ui.draw.clip
 
 data class NotificationEvent(val icon: String, val message: String)
 
@@ -60,6 +68,16 @@ sealed class BottomNavItem(val route: String, val label: String, val icon: Image
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Truly transparent edge-to-edge UI
+        window.setFlags(android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS, android.view.WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS)
+        window.statusBarColor = android.graphics.Color.TRANSPARENT
+        window.navigationBarColor = android.graphics.Color.TRANSPARENT
+        
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            window.decorView.systemUiVisibility = android.view.View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR or 
+                                                   android.view.View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR
+        }
         
         // Start Foreground Service for background database listening
         val startServiceIntent = android.content.Intent(this, DatabaseListenerService::class.java)
@@ -137,27 +155,37 @@ fun MainScreen() {
         })
     }
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = Modifier.fillMaxSize().background(Color.White)) {
         Scaffold(
-            containerColor = Color(0xFFF9FAFB),
+            containerColor = Color.Transparent,
             bottomBar = {
                 if (currentRoute != "login") {
-                    Surface(
-                        color = Color.White,
-                        shadowElevation = 16.dp,
-                        shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-                        modifier = Modifier.fillMaxWidth()
+                    // ── Premium Floating Bottom Navigation ──
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 24.dp, vertical = 20.dp)
+                            .navigationBarsPadding(),
+                        contentAlignment = Alignment.BottomCenter
                     ) {
-                        NavigationBar(
-                            containerColor = Color.Transparent,
-                            contentColor = Color(0xFF111827),
-                            tonalElevation = 0.dp
+                        Surface(
+                            color = Color.White.copy(alpha = 0.95f),
+                            shadowElevation = 12.dp,
+                            shape = RoundedCornerShape(32.dp),
+                            modifier = Modifier.fillMaxWidth().height(72.dp)
                         ) {
-                            items.forEach { item ->
-                                NavigationBarItem(
-                                    icon = { Icon(item.icon, contentDescription = item.label) },
-                                    label = { 
-                                        val text = when (item.route) {
+                            Row(
+                                modifier = Modifier.fillMaxSize().padding(horizontal = 8.dp),
+                                horizontalArrangement = Arrangement.SpaceEvenly,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                items.forEach { item ->
+                                    key(item.route) {
+                                        val isSelected = currentRoute == item.route
+                                        val activeColor = Color(0xFFFF7A3D)
+                                        val inactiveColor = Color(0xFF9CA3AF)
+                                        
+                                        val labelText = when (item.route) {
                                             "dashboard" -> Lang.get("Home", "ಮುಖಪುಟ")
                                             "meal"      -> Lang.get("Meals", "ಊಟ")
                                             "facility"  -> Lang.get("Facility", "ಸೌಲಭ್ಯ")
@@ -165,28 +193,49 @@ fun MainScreen() {
                                             "feedback"  -> Lang.get("Feedback", "ಪ್ರತಿಕ್ರಿಯೆ")
                                             else        -> item.label
                                         }
-                                        Text(text) 
-                                    },
-                                    selected = currentRoute == item.route,
-                                    colors = NavigationBarItemDefaults.colors(
-                                        selectedIconColor = Color.White,
-                                        selectedTextColor = Color(0xFF111827),
-                                        indicatorColor = Color(0xFF111827),
-                                        unselectedIconColor = Color(0xFF6B7280),
-                                        unselectedTextColor = Color(0xFF6B7280)
-                                    ),
-                                    onClick = {
-                                        if (currentRoute != item.route) {
-                                            navController.navigate(item.route) {
-                                                popUpTo("dashboard") {
-                                                    saveState = true
-                                                }
-                                                launchSingleTop = true
-                                                restoreState = true
+    
+                                        Column(
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .clickable(
+                                                    interactionSource = remember { MutableInteractionSource() },
+                                                    indication = null 
+                                                ) {
+                                                    navController.navigate(item.route) {
+                                                        popUpTo(navController.graph.findStartDestination().id) {
+                                                            saveState = true
+                                                        }
+                                                        launchSingleTop = true
+                                                        restoreState = true
+                                                    }
+                                                },
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            verticalArrangement = Arrangement.Center
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(width = 54.dp, height = 34.dp)
+                                                    .clip(RoundedCornerShape(16.dp))
+                                                    .background(if (isSelected) activeColor else Color.Transparent),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                Icon(
+                                                    imageVector = item.icon,
+                                                    contentDescription = item.label,
+                                                    tint = if (isSelected) Color.White else inactiveColor,
+                                                    modifier = Modifier.size(20.dp)
+                                                )
                                             }
+                                            Spacer(Modifier.height(4.dp))
+                                            Text(
+                                                text = labelText,
+                                                color = if (isSelected) activeColor else inactiveColor,
+                                                fontSize = 10.sp,
+                                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                                            )
                                         }
                                     }
-                                )
+                                }
                             }
                         }
                     }
@@ -207,6 +256,8 @@ fun MainScreen() {
                 composable(BottomNavItem.Facility.route)  { FacilityScreen(onBackClick = { navController.popBackStack() }) }
                 composable(BottomNavItem.Stars.route)     { StarsScreen(onBackClick = { navController.popBackStack() }) }
                 composable(BottomNavItem.Feedback.route)  { FeedbackScreen(onBackClick = { navController.popBackStack() }) }
+                composable("announcements") { AnnouncementsScreen(onBackClick = { navController.popBackStack() }) }
+                composable("profile") { ProfileScreen(navController = navController) }
             }
         }
 
@@ -222,8 +273,8 @@ fun MainScreen() {
             currentNotification?.let { notif ->
                 Surface(
                     shape = RoundedCornerShape(20.dp),
-                    color = Color(0xFF111827).copy(alpha = 0.95f),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.15f)),
+                    color = MaterialTheme.colorScheme.primary,
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.15f)),
                     shadowElevation = 24.dp,
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -246,7 +297,7 @@ fun MainScreen() {
                         Column {
                             Text(
                                 "Notification",
-                                color = Color.White.copy(alpha = 0.5f),
+                                color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.7f),
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
                                 letterSpacing = 1.sp
@@ -254,7 +305,7 @@ fun MainScreen() {
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 notif.message,
-                                color = Color.White,
+                                color = MaterialTheme.colorScheme.onPrimary,
                                 fontSize = 15.sp,
                                 fontWeight = FontWeight.SemiBold
                             )

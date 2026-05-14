@@ -8,22 +8,29 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.draw.alpha
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.outlined.PhotoLibrary
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -44,16 +51,7 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import com.pruthviraj.shalenammapride.AppNotificationManager
-
-// Premium White Theme Colors
-private val BgDark    = Color(0xFFF9FAFB) // Light gray background
-private val BgMid     = Color(0xFFFFFFFF) // White cards
-private val BgCard    = Color(0xFFF3F4F6) // Off-white placeholders
-private val PrimaryDark = Color(0xFF111827) // Dark text & buttons
-private val TagBg     = Color(0xFFF3F4F6) // Light gray for tags
-private val TextPrim  = Color(0xFF111827)
-private val TextMuted = Color(0xFF6B7280)
-private val Border    = Color(0xFFE5E7EB) // Soft gray borders
+import java.util.Calendar
 
 data class FacilityItem(
     val id        : String = "",
@@ -66,20 +64,29 @@ data class FacilityItem(
 
 @Composable
 fun FacilityScreen(onBackClick: () -> Unit = {}) {
-    val context  = LocalContext.current
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    
     var facilities by remember { mutableStateOf<List<FacilityItem>>(emptyList()) }
-    var showForm   by remember { mutableStateOf(false) }
+    var showForm by remember { mutableStateOf(false) }
+    var showHistoryView by remember { mutableStateOf(false) }
 
     // form fields
-    var title       by remember { mutableStateOf("") }
+    var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
-    var category    by remember { mutableStateOf("Classroom") }
+    var category by remember { mutableStateOf("Classroom") }
     var selectedUri by remember { mutableStateOf<Uri?>(null) }
     var isUploading by remember { mutableStateOf(false) }
-    var statusMsg   by remember { mutableStateOf("") }
+    var statusMsg by remember { mutableStateOf("") }
 
-    val database   = FirebaseDatabase.getInstance().reference
-    val categories = listOf("Classroom", "Laboratory", "Library", "Sports Ground", "Toilet", "Computer Lab", "Other")
+    val database = FirebaseDatabase.getInstance().reference
+    val categories = listOf(
+        CategoryData("Building", "🏢", Color(0xFFFEE2E2), Color(0xFFEF4444)),
+        CategoryData("Classrooms", "🏫", Color(0xFFDCFCE7), Color(0xFF22C55E)),
+        CategoryData("Playground", "⛹️", Color(0xFFDBEAFE), Color(0xFF3B82F6)),
+        CategoryData("Library", "📚", Color(0xFFFEF9C3), Color(0xFFEAB308)),
+        CategoryData("Laboratory", "🧪", Color(0xFFF3E8FF), Color(0xFFA855F7))
+    )
 
     // Load facilities from Firebase
     LaunchedEffect(Unit) {
@@ -99,618 +106,350 @@ fun FacilityScreen(onBackClick: () -> Unit = {}) {
         }
     }
 
-    val galleryLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.GetContent()
-    ) { uri -> selectedUri = uri }
-
-    val cameraLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.TakePicturePreview()
-    ) { bitmap ->
+    val galleryLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri -> selectedUri = uri }
+    val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicturePreview()) { bitmap ->
         if (bitmap != null) {
             val file = java.io.File(context.cacheDir, "facility_temp.jpg")
-            file.outputStream().use {
-                bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 90, it)
-            }
+            file.outputStream().use { bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 90, it) }
             selectedUri = Uri.fromFile(file)
+        }
+    }
+
+    // Stats
+    val thisWeekCount = remember(facilities) {
+        val weekStart = Calendar.getInstance().apply { set(Calendar.DAY_OF_WEEK, firstDayOfWeek) }.timeInMillis
+        facilities.count { it.timestamp >= weekStart }
+    }
+    val lastUpdated = remember(facilities) {
+        if (facilities.isEmpty()) "No uploads yet"
+        else {
+            val date = java.util.Date(facilities.first().timestamp)
+            java.text.SimpleDateFormat("MMM dd", java.util.Locale.getDefault()).format(date)
         }
     }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(BgDark)
+            .background(Color.White)
+            .verticalScroll(rememberScrollState())
     ) {
-
-        // ── Premium Header ──
-        Surface(
-            color = BgMid,
-            shadowElevation = 4.dp,
-            shape = RoundedCornerShape(bottomStart = 24.dp, bottomEnd = 24.dp),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 32.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = PrimaryDark
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = Lang.get("Facility Gallery", "ಸೌಲಭ್ಯ ಗ್ಯಾಲರಿ"),
-                        color = TextPrim,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
-                Spacer(modifier = Modifier.width(12.dp))
-                Surface(
-                    shape = RoundedCornerShape(20.dp),
-                    color = TagBg,
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Border)
-                ) {
-                    Text(
-                        "${facilities.size} photos",
-                        color = TextPrim,
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                        softWrap = false,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                    )
-                }
-            }
-        }
-
-        LazyColumn(
-            modifier = Modifier.padding(horizontal = 20.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-
-            // ── Swipeable Pager (shown only when photos exist) ──
-            if (facilities.isNotEmpty()) {
-                item {
-                    Spacer(modifier = Modifier.height(20.dp))
-                    Text(
-                        "Featured Facilities",
-                        color = TextPrim,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(bottom = 12.dp)
-                    )
-                    FacilityPager(facilities)
-                }
-            } else {
-                item { Spacer(modifier = Modifier.height(20.dp)) }
-            }
-
-            // ── Add Photo Button ──
-            if (!showForm) {
-                item {
-                    Button(
-                        onClick = { showForm = true },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(56.dp),
-                        shape  = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryDark)
-                    ) {
-                        Icon(Icons.Filled.Add, contentDescription = null, tint = Color.White)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            "Add Facility Photo",
-                            color = Color.White,
-                            fontWeight = FontWeight.SemiBold,
-                            fontSize = 15.sp
-                        )
-                    }
-                }
-            } else {
-                // ── Upload Form ──
-                item {
-                    Surface(
-                        shape = RoundedCornerShape(16.dp),
-                        color = BgMid,
-                        border = androidx.compose.foundation.BorderStroke(1.dp, Border),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(modifier = Modifier.padding(20.dp)) {
-
-                            Text(
-                                "Add New Facility Photo",
-                                color = TextPrim,
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            // Image preview
-                            if (selectedUri != null) {
-                                AsyncImage(
-                                    model = selectedUri,
-                                    contentDescription = null,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(180.dp)
-                                        .clip(RoundedCornerShape(12.dp)),
-                                    contentScale = ContentScale.Crop
-                                )
-                            } else {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(140.dp)
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .background(BgCard)
-                                        .border(1.dp, Border, RoundedCornerShape(12.dp)),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                        Text("🏫", fontSize = 28.sp)
-                                        Spacer(modifier = Modifier.height(8.dp))
-                                        Text(
-                                            "No photo selected",
-                                            color = TextMuted,
-                                            fontSize = 13.sp
-                                        )
-                                    }
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            // Camera + Gallery
-                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                Button(
-                                    onClick = { cameraLauncher.launch(null) },
-                                    modifier = Modifier.weight(1f),
-                                    shape  = RoundedCornerShape(10.dp),
-                                    colors = ButtonDefaults.buttonColors(containerColor = TagBg),
-                                    border = androidx.compose.foundation.BorderStroke(1.dp, Border)
-                                ) {
-                                    Text(Lang.get("📸 Camera", "📸 ಕ್ಯಾಮೆರಾ"), color = PrimaryDark, fontSize = 13.sp, fontWeight = FontWeight.Medium)
-                                }
-                                Button(
-                                    onClick = { galleryLauncher.launch("image/*") },
-                                    modifier = Modifier.weight(1f),
-                                    shape  = RoundedCornerShape(10.dp),
-                                    colors = ButtonDefaults.buttonColors(containerColor = TagBg),
-                                    border = androidx.compose.foundation.BorderStroke(1.dp, Border)
-                                ) {
-                                    Text(Lang.get("🖼️ Gallery", "🖼️ ಗ್ಯಾಲರಿ"), color = PrimaryDark, fontSize = 13.sp, fontWeight = FontWeight.Medium)
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            // Title field
-                            OutlinedTextField(
-                                value = title,
-                                onValueChange = { title = it },
-                                label = { Text(Lang.get("Room/Area name (e.g. Science Lab)", "ಕೋಣೆ/ಪ್ರದೇಶದ ಹೆಸರು (ಉದಾ. ವಿಜ್ಞಾನ ಪ್ರಯೋಗಾಲಯ)"), color = TextMuted) },
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedTextColor     = TextPrim,
-                                    unfocusedTextColor   = TextPrim,
-                                    focusedBorderColor   = PrimaryDark,
-                                    unfocusedBorderColor = Border,
-                                    unfocusedContainerColor = Color.Transparent,
-                                    focusedContainerColor = Color.Transparent
-                                ),
-                                shape = RoundedCornerShape(10.dp)
-                            )
-
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            // Description field
-                            OutlinedTextField(
-                                value = description,
-                                onValueChange = { description = it },
-                                label = { Text(Lang.get("Short description (optional)", "ಚಿಕ್ಕ ವಿವರಣೆ (ಐಚ್ಛಿಕ)"), color = TextMuted) },
-                                modifier = Modifier.fillMaxWidth(),
-                                minLines = 2,
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedTextColor     = TextPrim,
-                                    unfocusedTextColor   = TextPrim,
-                                    focusedBorderColor   = PrimaryDark,
-                                    unfocusedBorderColor = Border,
-                                    unfocusedContainerColor = Color.Transparent,
-                                    focusedContainerColor = Color.Transparent
-                                ),
-                                shape = RoundedCornerShape(10.dp)
-                            )
-
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            // Category chips
-                            Text(Lang.get("Category", "ವರ್ಗ"), color = TextPrim, fontSize = 14.sp, fontWeight = FontWeight.Medium)
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            CustomFlowRow(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                categories.forEach { cat ->
-                                    FilterChip(
-                                        selected = category == cat,
-                                        onClick  = { category = cat },
-                                        label    = { Text(cat, fontSize = 12.sp) },
-                                        colors   = FilterChipDefaults.filterChipColors(
-                                            selectedContainerColor = PrimaryDark,
-                                            selectedLabelColor     = Color.White,
-                                            containerColor         = TagBg,
-                                            labelColor             = TextPrim
-                                        ),
-                                        border = FilterChipDefaults.filterChipBorder(
-                                            borderColor = if(category == cat) PrimaryDark else Border,
-                                            enabled = true,
-                                            selected = category == cat
-                                        )
-                                    )
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(32.dp))
-
-                            // Cancel + Submit
-                            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                OutlinedButton(
-                                    onClick = {
-                                        showForm    = false
-                                        selectedUri = null
-                                        title       = ""
-                                        description = ""
-                                        statusMsg   = ""
-                                    },
-                                    modifier = Modifier.weight(1f).height(48.dp),
-                                    shape    = RoundedCornerShape(10.dp),
-                                    border   = androidx.compose.foundation.BorderStroke(1.dp, Border)
-                                ) { Text(Lang.get("Cancel", "ರದ್ದುಗೊಳಿಸಿ"), color = TextMuted, fontWeight = FontWeight.Medium) }
-
-                                Button(
-                                    onClick = {
-                                        if (title.isBlank()) {
-                                            statusMsg = "⚠️ Please enter a room name!"
-                                            return@Button
-                                        }
-                                        if (selectedUri == null) {
-                                            statusMsg = "⚠️ Please select a photo!"
-                                            return@Button
-                                        }
-                                        isUploading = true
-                                        statusMsg   = "Uploading..."
-
-                                        CoroutineScope(Dispatchers.IO).launch {
-                                            val imageUrl = uploadFacilityImage(context, selectedUri!!)
-
-                                            if (imageUrl == null) {
-                                                withContext(Dispatchers.Main) {
-                                                    isUploading = false
-                                                    statusMsg   = "❌ Upload failed!"
-                                                }
-                                                return@launch
-                                            }
-
-                                            val key  = database.child("facility").push().key ?: return@launch
-                                            val data = mapOf(
-                                                "title"       to title,
-                                                "description" to description,
-                                                "imageUrl"    to imageUrl,
-                                                "category"    to category,
-                                                "timestamp"   to System.currentTimeMillis()
-                                            )
-                                            database.child("facility").child(key)
-                                                .setValue(data)
-                                                .addOnSuccessListener {
-                                                    CoroutineScope(Dispatchers.Main).launch {
-                                                        val newItem = FacilityItem(
-                                                            key, title, description,
-                                                            imageUrl, category,
-                                                            System.currentTimeMillis()
-                                                        )
-                                                        facilities  = listOf(newItem) + facilities
-                                                        isUploading = false
-                                                        showForm    = false
-                                                        title       = ""
-                                                        description = ""
-                                                        selectedUri = null
-                                                        statusMsg   = ""
-                                                        AppNotificationManager.trigger("🏫", "Photo Added to Gallery!")
-                                                    }
-                                                }
-                                                .addOnFailureListener {
-                                                    CoroutineScope(Dispatchers.Main).launch {
-                                                        isUploading = false
-                                                        statusMsg   = "❌ ${it.message}"
-                                                    }
-                                                }
-                                        }
-                                    },
-                                    modifier = Modifier.weight(2f).height(48.dp),
-                                    enabled  = !isUploading,
-                                    shape    = RoundedCornerShape(10.dp),
-                                    colors   = ButtonDefaults.buttonColors(containerColor = PrimaryDark)
-                                ) {
-                                    Text(
-                                        if (isUploading) Lang.get("Uploading...", "ಅಪ್‌ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ...") else Lang.get("Add Photo", "ಫೋಟೋ ಸೇರಿಸಿ"),
-                                        color = Color.White,
-                                        fontWeight = FontWeight.SemiBold
-                                    )
-                                }
-                            }
-
-                            if (statusMsg.isNotEmpty()) {
-                                Spacer(modifier = Modifier.height(12.dp))
-                                Text(
-                                    statusMsg,
-                                    color = if (statusMsg.startsWith("❌")) Color(0xFFDC2626) else PrimaryDark,
-                                    fontSize = 13.sp,
-                                    textAlign = TextAlign.Center,
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            // ── Grid list of all facility photos ──
-            if (facilities.isNotEmpty()) {
-                item {
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        Lang.get("All Rooms & Areas", "ಎಲ್ಲಾ ಕೊಠಡಿಗಳು ಮತ್ತು ಪ್ರದೇಶಗಳು"),
-                        color = TextPrim,
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(bottom = 4.dp)
-                    )
-                }
-                items(facilities) { item ->
-                    FacilityCard(item, onDelete = {
-                        database.child("facility").child(item.id).removeValue().addOnSuccessListener {
-                            facilities = facilities.filter { it.id != item.id }
-                        }
-                    })
-                }
-            }
-
-            item { Spacer(modifier = Modifier.height(80.dp)) }
-        }
-    }
-}
-
-// ── Swipeable Pager ──
-@Composable
-fun FacilityPager(facilities: List<FacilityItem>) {
-    val pagerState = rememberPagerState(pageCount = { facilities.size })
-
-    Column {
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier.fillMaxWidth()
-        ) { page ->
-            val item = facilities[page]
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(240.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .border(1.dp, Border, RoundedCornerShape(16.dp))
-            ) {
-                AsyncImage(
-                    model = item.imageUrl,
-                    contentDescription = item.title,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-
-                // White gradient overlay for text readability
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .align(Alignment.BottomCenter)
-                        .background(
-                            androidx.compose.ui.graphics.Brush.verticalGradient(
-                                listOf(Color.Transparent, Color(0xCC000000))
-                            )
-                        )
-                        .padding(16.dp)
-                ) {
-                    Column {
-                        Surface(
-                            shape = RoundedCornerShape(6.dp),
-                            color = Color.White.copy(alpha = 0.9f)
-                        ) {
-                            Text(
-                                item.category,
-                                color = PrimaryDark,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                            )
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            item.title,
-                            color = Color.White,
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        if (item.description.isNotBlank()) {
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                item.description,
-                                color = Color.White.copy(alpha = 0.9f),
-                                fontSize = 14.sp
-                            )
-                        }
-                    }
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Dot indicators
+        // ── Top Header ──
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center
-        ) {
-            repeat(facilities.size) { index ->
-                Box(
-                    modifier = Modifier
-                        .padding(horizontal = 4.dp)
-                        .size(if (pagerState.currentPage == index) 8.dp else 6.dp)
-                        .background(
-                            if (pagerState.currentPage == index) PrimaryDark else Border,
-                            CircleShape
-                        )
-                )
-            }
-        }
-    }
-}
-
-// ── Facility List Card ──
-@Composable
-fun FacilityCard(item: FacilityItem, onDelete: () -> Unit) {
-    Surface(
-        shape = RoundedCornerShape(12.dp),
-        color = BgMid,
-        border = androidx.compose.foundation.BorderStroke(1.dp, Border),
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            AsyncImage(
-                model = item.imageUrl,
-                contentDescription = null,
-                modifier = Modifier
-                    .size(80.dp)
-                    .clip(RoundedCornerShape(8.dp)),
-                contentScale = ContentScale.Crop
-            )
-            Spacer(modifier = Modifier.width(16.dp))
-            Column(modifier = Modifier.weight(1f)) {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Surface(
-                        shape = RoundedCornerShape(6.dp),
-                        color = TagBg
-                    ) {
-                        Text(
-                            item.category,
-                            color = TextMuted,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Medium,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                        )
+            Surface(
+                shape = RoundedCornerShape(14.dp),
+                color = Color(0xFFF3F4F6),
+                modifier = Modifier.size(44.dp).clickable { onBackClick() }
+            ) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = Color(0xFF1A1A2E), modifier = Modifier.size(20.dp))
+                }
+            }
+            
+            Column(modifier = Modifier.weight(1f).padding(horizontal = 12.dp)) {
+                Text(Lang.get("Facility Gallery", "ಸೌಲಭ್ಯ ಗ್ಯಾಲರಿ"), color = Color(0xFF1A1A2E), fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                Text(Lang.get("Upload and manage facility photos", "ಸೌಲಭ್ಯ ಫೋಟೋಗಳನ್ನು ನಿರ್ವಹಿಸಿ"), color = Color(0xFF9CA3AF), fontSize = 11.sp)
+            }
+
+            Surface(
+                onClick = { showHistoryView = !showHistoryView },
+                shape = RoundedCornerShape(20.dp),
+                color = if (showHistoryView) Color(0xFFFF7A3D).copy(alpha = 0.1f) else Color(0xFFFFF4EE)
+            ) {
+                Row(modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Outlined.PhotoLibrary, null, tint = Color(0xFFFF7A3D), modifier = Modifier.size(14.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text("${facilities.size} photos", color = Color(0xFFFF7A3D), fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+
+        // ── Stats Row ──
+        Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            FacilityStatCard("🖼️", "${facilities.size}", Lang.get("Total Photos", "ಒಟ್ಟು ಫೋಟೋಗಳು"), Color(0xFF6366F1), Modifier.weight(1f))
+            FacilityStatCard("📅", "$thisWeekCount", Lang.get("This Week", "ಈ ವಾರ"), Color(0xFF10B981), Modifier.weight(1f))
+            FacilityStatCard("🕒", lastUpdated, Lang.get("Last Updated", "ಕೊನೆಯದಾಗಿ ನವೀಕರಿಸಲಾಗಿದೆ"), Color(0xFFF59E0B), Modifier.weight(1f))
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // ── Primary Upload Card ──
+        if (!showForm) {
+            Surface(
+                shape = RoundedCornerShape(22.dp),
+                shadowElevation = 8.dp,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).clickable { showForm = true }
+            ) {
+                Box(
+                    modifier = Modifier.fillMaxWidth()
+                        .background(Brush.horizontalGradient(listOf(Color(0xFFFF7A3D), Color(0xFFFF9A62))), RoundedCornerShape(22.dp))
+                        .padding(20.dp)
+                ) {
+                    Row(modifier = Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Surface(shape = CircleShape, color = Color.White.copy(alpha = 0.25f), modifier = Modifier.size(44.dp)) {
+                                Box(contentAlignment = Alignment.Center) { Icon(Icons.Default.Add, null, tint = Color.White, modifier = Modifier.size(24.dp)) }
+                            }
+                            Spacer(Modifier.width(14.dp))
+                            Column {
+                                Text(Lang.get("Add Facility Photo", "ಸೌಲಭ್ಯ ಫೋಟೋ ಸೇರಿಸಿ"), color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                                Text(Lang.get("Upload photos of school facilities", "ಶಾಲಾ ಸೌಲಭ್ಯಗಳ ಫೋಟೋಗಳನ್ನು ಅಪ್‌ಲೋಡ್ ಮಾಡಿ"), color = Color.White.copy(alpha = 0.85f), fontSize = 11.sp)
+                            }
+                        }
+                        Icon(Icons.Default.ChevronRight, null, tint = Color.White, modifier = Modifier.size(24.dp))
                     }
+                }
+            }
+        } else {
+            // ── Upload Form ──
+            Surface(
+                shape = RoundedCornerShape(22.dp), color = Color.White, shadowElevation = 4.dp,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp)
+            ) {
+                Column(Modifier.padding(20.dp)) {
+                    Text(Lang.get("Add New Photo", "ಹೊಸ ಫೋಟೋ ಸೇರಿಸಿ"), color = Color(0xFF1A1A2E), fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
+                    Spacer(Modifier.height(12.dp))
+
+                    if (selectedUri != null) {
+                        AsyncImage(model = selectedUri, null, Modifier.fillMaxWidth().height(150.dp).clip(RoundedCornerShape(14.dp)), contentScale = ContentScale.Crop)
+                    } else {
+                        Box(Modifier.fillMaxWidth().height(100.dp).clip(RoundedCornerShape(14.dp)).background(Color(0xFFF9FAFB)).border(1.dp, Color(0xFFE5E7EB), RoundedCornerShape(14.dp)), contentAlignment = Alignment.Center) {
+                            Text("🖼️ Tap below to select", color = Color(0xFF9CA3AF), fontSize = 11.sp)
+                        }
+                    }
+
+                    Spacer(Modifier.height(12.dp))
+                    Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(10.dp)) {
+                        Button(onClick = { cameraLauncher.launch(null) }, Modifier.weight(1f), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF3F4F6))) {
+                            Text("📸 Camera", color = Color(0xFF374151), fontSize = 12.sp)
+                        }
+                        Button(onClick = { galleryLauncher.launch("image/*") }, Modifier.weight(1f), shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFF3F4F6))) {
+                            Text("🖼️ Gallery", color = Color(0xFF374151), fontSize = 12.sp)
+                        }
+                    }
+
+                    Spacer(Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = title, 
+                        onValueChange = { title = it }, 
+                        label = { Text("Name (e.g. Science Lab)") }, 
+                        modifier = Modifier.fillMaxWidth(), 
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color(0xFF1A1A2E),
+                            unfocusedTextColor = Color(0xFF1A1A2E),
+                            focusedBorderColor = Color(0xFFFF7A3D)
+                        )
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    
+                    // Category Selection
+                    Text("Select Category", fontSize = 12.sp, color = Color(0xFF6B7280))
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(vertical = 8.dp)) {
+                        items(listOf("Classroom", "Laboratory", "Library", "Playground", "Building", "Other")) { cat ->
+                            Surface(
+                                shape = RoundedCornerShape(12.dp),
+                                color = if (category == cat) Color(0xFFFF7A3D) else Color(0xFFF3F4F6),
+                                modifier = Modifier.clickable { category = cat }
+                            ) {
+                                Text(cat, modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp), color = if (category == cat) Color.White else Color(0xFF374151), fontSize = 11.sp)
+                            }
+                        }
+                    }
+
+                    Spacer(Modifier.height(16.dp))
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        OutlinedButton(onClick = { showForm = false; selectedUri = null; statusMsg = "" }, Modifier.weight(1f), shape = RoundedCornerShape(12.dp)) {
+                            Text("Cancel", fontSize = 13.sp)
+                        }
+                        Button(
+                            onClick = {
+                                if (title.isBlank() || selectedUri == null) { statusMsg = "⚠️ Title and Image required!"; return@Button }
+                                isUploading = true; statusMsg = "Uploading..."
+                                scope.launch {
+                                    val url = uploadFacilityImage(context, selectedUri!!)
+                                    if (url != null) {
+                                        val key = database.child("facility").push().key ?: ""
+                                        val data = mapOf("title" to title, "description" to description, "imageUrl" to url, "category" to category, "timestamp" to System.currentTimeMillis())
+                                        database.child("facility").child(key).setValue(data).addOnSuccessListener {
+                                            facilities = listOf(FacilityItem(key, title, description, url, category, System.currentTimeMillis())) + facilities
+                                            isUploading = false; showForm = false; title = ""; selectedUri = null; statusMsg = ""
+                                            AppNotificationManager.trigger("🏫", "Photo Added!")
+                                        }
+                                    } else { isUploading = false; statusMsg = "❌ Failed" }
+                                }
+                            },
+                            Modifier.weight(2f), enabled = !isUploading, shape = RoundedCornerShape(12.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFFF7A3D))
+                        ) {
+                            Text(if (isUploading) "Uploading..." else "Add Photo", color = Color.White, fontSize = 13.sp)
+                        }
+                    }
+                    if (statusMsg.isNotEmpty()) Text(statusMsg, color = Color.Red, fontSize = 11.sp, modifier = Modifier.fillMaxWidth().padding(top = 8.dp), textAlign = TextAlign.Center)
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // ── Empty State or Gallery ──
+        if (facilities.isEmpty()) {
+            Surface(
+                shape = RoundedCornerShape(22.dp),
+                color = Color(0xFFF9FAFB),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp)
+            ) {
+                Column(Modifier.padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("🖼️", fontSize = 48.sp)
+                    Spacer(Modifier.height(16.dp))
+                    Text(Lang.get("No photos added yet", "ಇನ್ನೂ ಯಾವುದೇ ಫೋಟೋಗಳನ್ನು ಸೇರಿಸಲಾಗಿಲ್ಲ"), color = Color(0xFF1A1A2E), fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                    Text(Lang.get("Start by adding photos of your school facilities.", "ನಿಮ್ಮ ಶಾಲೆಯ ಸೌಲಭ್ಯಗಳ ಫೋಟೋಗಳನ್ನು ಸೇರಿಸುವ ಮೂಲಕ ಪ್ರಾರಂಭಿಸಿ."), color = Color(0xFF9CA3AF), fontSize = 11.sp, textAlign = TextAlign.Center)
+                }
+            }
+        }
+
+        // ── Full History Grid ──
+        if (showHistoryView && facilities.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(24.dp))
+            Text(Lang.get("All Facilities History", "ಎಲ್ಲಾ ಸೌಲಭ್ಯಗಳ ಇತಿಹಾಸ"), color = Color(0xFF1A1A2E), fontSize = 16.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(horizontal = 20.dp))
+            Spacer(modifier = Modifier.height(12.dp))
+            Column(Modifier.padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                facilities.chunked(2).forEach { rowItems ->
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        rowItems.forEach { item ->
+                            FacilityHistoryItem(item, Modifier.weight(1f), onDelete = {
+                                database.child("facility").child(item.id).removeValue().addOnSuccessListener {
+                                    facilities = facilities.filter { it.id != item.id }
+                                }
+                            })
+                        }
+                        if (rowItems.size == 1) Spacer(Modifier.weight(1f))
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // ── Suggested Categories ──
+        Text(Lang.get("Suggested Categories", "ಸೂಚಿಸಲಾದ ವಿಭಾಗಗಳು"), color = Color(0xFF1A1A2E), fontSize = 16.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(horizontal = 20.dp))
+        Spacer(modifier = Modifier.height(12.dp))
+        LazyRow(contentPadding = PaddingValues(horizontal = 20.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            items(categories) { cat ->
+                val count = facilities.count { it.category.equals(cat.name, ignoreCase = true) }
+                CategoryCard(cat, count)
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // ── Smart Tip Card ──
+        Surface(
+            shape = RoundedCornerShape(20.dp),
+            color = Color(0xFFFFF8F0),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp)
+        ) {
+            Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("💡", fontSize = 24.sp)
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(Lang.get("Tip", "ಸಲಹೆ"), color = Color(0xFF92400E), fontSize = 13.sp, fontWeight = FontWeight.Bold)
                     Text(
-                        "✕",
-                        color = Color(0xFFDC2626),
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.clickable { onDelete() }.padding(4.dp)
+                        Lang.get("High quality photos help showcase your school facilities to parents and visitors.", "ಉತ್ತಮ ಗುಣಮಟ್ಟದ ಫೋಟೋಗಳು ನಿಮ್ಮ ಶಾಲೆಯ ಸೌಲಭ್ಯಗಳನ್ನು ಪೋಷಕರಿಗೆ ತೋರಿಸಲು ಸಹಾಯ ಮಾಡುತ್ತದೆ."),
+                        color = Color(0xFF92400E), fontSize = 11.sp, lineHeight = 16.sp
                     )
                 }
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    item.title,
-                    color = TextPrim,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold
-                )
-                if (item.description.isNotBlank()) {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        item.description,
-                        color = TextMuted,
-                        fontSize = 13.sp,
-                        lineHeight = 18.sp
-                    )
+                Text("🖼️", fontSize = 24.sp, modifier = Modifier.alpha(0.5f))
+            }
+        }
+
+        Spacer(modifier = Modifier.height(100.dp))
+    }
+}
+
+@Composable
+fun FacilityStatCard(emoji: String, value: String, label: String, color: Color, modifier: Modifier = Modifier) {
+    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, shadowElevation = 3.dp, modifier = modifier) {
+        Column(Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Surface(shape = CircleShape, color = color.copy(alpha = 0.1f), modifier = Modifier.size(34.dp)) {
+                Box(contentAlignment = Alignment.Center) { Text(emoji, fontSize = 16.sp) }
+            }
+            Spacer(Modifier.height(8.dp))
+            Text(value, color = Color(0xFF1A1A2E), fontSize = 16.sp, fontWeight = FontWeight.Bold)
+            Text(label, color = Color(0xFF6B7280), fontSize = 8.sp, textAlign = TextAlign.Center, maxLines = 1)
+        }
+    }
+}
+
+@Composable
+fun CategoryCard(cat: CategoryData, count: Int) {
+    Surface(shape = RoundedCornerShape(18.dp), color = Color.White, shadowElevation = 2.dp, modifier = Modifier.width(110.dp)) {
+        Column(Modifier.padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Surface(shape = CircleShape, color = cat.bgColor, modifier = Modifier.size(40.dp)) {
+                Box(contentAlignment = Alignment.Center) { Text(cat.icon, fontSize = 20.sp) }
+            }
+            Spacer(Modifier.height(8.dp))
+            Text(cat.name, color = Color(0xFF1A1A2E), fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+            Text("$count photos", color = Color(0xFF6B7280), fontSize = 9.sp)
+        }
+    }
+}
+
+@Composable
+fun FacilityHistoryItem(item: FacilityItem, modifier: Modifier = Modifier, onDelete: () -> Unit) {
+    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, border = BorderStroke(1.dp, Color(0xFFF3F4F6)), modifier = modifier) {
+        Column {
+            Box {
+                AsyncImage(model = item.imageUrl, null, Modifier.fillMaxWidth().height(120.dp).clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)), contentScale = ContentScale.Crop)
+                Surface(shape = RoundedCornerShape(8.dp), color = Color.Black.copy(alpha = 0.5f), modifier = Modifier.align(Alignment.TopEnd).padding(6.dp).clickable { onDelete() }) {
+                    Icon(Icons.Default.Close, null, tint = Color.White, modifier = Modifier.size(16.dp).padding(2.dp))
+                }
+            }
+            Column(Modifier.padding(10.dp)) {
+                Text(item.category, color = Color(0xFFFF7A3D), fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                Text(item.title, color = Color(0xFF1A1A2E), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                if (item.description.isNotEmpty()) {
+                    Text(item.description, color = Color(0xFF9CA3AF), fontSize = 10.sp, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 }
             }
         }
     }
 }
 
-// ── Cloudinary upload ──
+@Composable
+fun FacilityGridItem(item: FacilityItem, onDelete: () -> Unit) {
+    Surface(shape = RoundedCornerShape(16.dp), color = Color.White, shadowElevation = 2.dp, modifier = Modifier.width(160.dp)) {
+        Column {
+            Box {
+                AsyncImage(model = item.imageUrl, null, Modifier.fillMaxWidth().height(100.dp).clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp)), contentScale = ContentScale.Crop)
+                Surface(shape = RoundedCornerShape(8.dp), color = Color.Black.copy(alpha = 0.5f), modifier = Modifier.align(Alignment.TopEnd).padding(6.dp).clickable { onDelete() }) {
+                    Icon(Icons.Default.Close, null, tint = Color.White, modifier = Modifier.size(16.dp).padding(2.dp))
+                }
+            }
+            Column(Modifier.padding(10.dp)) {
+                Text(item.category, color = Color(0xFFFF7A3D), fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                Text(item.title, color = Color(0xFF1A1A2E), fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
+        }
+    }
+}
+
+data class CategoryData(val name: String, val icon: String, val bgColor: Color, val accentColor: Color)
+
 suspend fun uploadFacilityImage(context: Context, imageUri: Uri): String? {
     return withContext(Dispatchers.IO) {
         try {
-            val bytes = context.contentResolver
-                .openInputStream(imageUri)?.readBytes() ?: return@withContext null
-            val body  = MultipartBody.Builder().setType(MultipartBody.FORM)
-                .addFormDataPart(
-                    "file", "facility.jpg",
-                    bytes.toRequestBody("image/*".toMediaType())
-                )
+            val bytes = context.contentResolver.openInputStream(imageUri)?.readBytes() ?: return@withContext null
+            val body = MultipartBody.Builder().setType(MultipartBody.FORM)
+                .addFormDataPart("file", "facility.jpg", bytes.toRequestBody("image/*".toMediaType()))
                 .addFormDataPart("upload_preset", "shalenamma_preset")
                 .build()
-            val req   = Request.Builder()
-                .url("https://api.cloudinary.com/v1_1/ddwxml58b/image/upload")
-                .post(body).build()
-            val res   = OkHttpClient().newCall(req).execute()
+            val req = Request.Builder().url("https://api.cloudinary.com/v1_1/ddwxml58b/image/upload").post(body).build()
+            val res = OkHttpClient().newCall(req).execute()
             JSONObject(res.body?.string() ?: "").getString("secure_url")
         } catch (e: Exception) { null }
     }
 }
-
-@Composable
-private fun CustomFlowRow(
-    modifier: Modifier = Modifier,
-    horizontalArrangement: Arrangement.Horizontal = Arrangement.Start,
-    verticalArrangement: Arrangement.Vertical = Arrangement.Top,
-    content: @Composable () -> Unit
-) {
-    androidx.compose.ui.layout.Layout(
-        content = content,
-        modifier = modifier
-    ) { measurables, constraints ->
-        val itemSpacing = 8.dp.roundToPx()
-        val lineSpacing = 8.dp.roundToPx()
-        
-        var width = 0
-        var height = 0
-        var lineWidth = 0
-        var lineHeight = 0
-        
-        val placeables = measurables.map { measurable ->
-            val placeable = measurable.measure(constraints)
-            if (lineWidth + placeable.width > constraints.maxWidth) {
-                width = maxOf(width, lineWidth)
-                height += lineHeight + lineSpacing
-                lineWidth = 0
-                lineHeight = 0
-            }
-            val x = lineWidth
-            val y = height
-            lineWidth += placeable.width + itemSpacing
-            lineHeight = maxOf(lineHeight, placeable.height)
-            
-            Triple(placeable, x, y)
-        }
-        
-        width = maxOf(width, lineWidth)
-        height += lineHeight
-        
-        layout(width, height) {
-            placeables.forEach { (placeable, x, y) ->
-                placeable.placeRelative(x, y)
-            }
-        }
-    }
-}
-
